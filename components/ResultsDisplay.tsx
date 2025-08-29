@@ -33,10 +33,12 @@ const ResultCard: React.FC<{ result: AnalysisResult }> = ({ result }) => {
                     <h4 className="text-sm font-medium text-slate-400 mb-1">Justification</h4>
                     <p className="text-slate-300">{justification}</p>
                 </div>
-                <div>
-                    <h4 className="text-sm font-medium text-slate-400 mb-1">Value</h4>
-                    <p className="text-slate-300">{value}</p>
-                </div>
+                {value && (
+                    <div>
+                        <h4 className="text-sm font-medium text-slate-400 mb-1">Value</h4>
+                        <p className="text-slate-300">{value}</p>
+                    </div>
+                )}
 
                 {quote && (
                     <div>
@@ -78,7 +80,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ results, isLoadi
             <div className="flex flex-col items-center justify-center h-full text-center text-slate-500 p-8">
                 <Icon icon="clipboard" className="w-16 h-16 mb-4"/>
                 <h3 className="text-2xl font-semibold">Results will appear here</h3>
-                <p className="mt-2 max-w-sm">Fill in the transcript and metrics, then click "Analyze" to see the magic happen.</p>
+                <p className="mt-2 max-w-sm">Build the transcript using the chat input, define your metrics, then click "Analyze" to see the magic happen.</p>
             </div>
         );
     }

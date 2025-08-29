@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { Metric, AnalysisResult } from '../types';
 
 if (!process.env.API_KEY) {
@@ -22,20 +22,36 @@ const resultSchema = {
         },
         value: {
             type: Type.STRING,
-            description: "The value of the given metric with the units"
+            description: "The value of the given metric with units, if applicable. E.g., '5 minutes', '$25', '3 times'. Should be empty if not applicable."
         }
     },
-    required: ["metricName", "detected", "justification", "quote"]
+    required: ["metricName", "detected", "justification"]
 };
 
-export const analyzeTranscript = async (
+const systemInstruction = `As an expert analyst, your task is to review the following transcript and calculate the specified metrics.
+
+For each metric, you must provide a boolean 'detected' status, and a 'justification' for your decision. If possible, also provide a relevant 'quote' from the transcript and the calculated 'value' of the metric.
+Return your findings as a JSON array where each object corresponds to one of the provided metrics.`;
+
+
+export const createAnalysisChat = (): Chat => {
+  return ai.chats.create({
+    model: 'gemini-2.5-flash',
+    config: {
+      systemInstruction,
+    },
+  });
+};
+
+export const performAnalysis = async (
+  chat: Chat,
   transcript: string,
   metrics: Metric[]
 ): Promise<AnalysisResult[]> => {
   const metricDefinitions = metrics.map(m => `- ${m.name}: ${m.description}`).join('\n');
 
   const prompt = `
-    As an expert analyst, your task is to review the following transcript and calucalute the specified metrics.
+    Analyze the following transcript based on the provided metrics.
 
     TRANSCRIPT:
     ---
@@ -46,15 +62,11 @@ export const analyzeTranscript = async (
     ---
     ${metricDefinitions}
     ---
-
-    For each metric, you must provide a boolean 'detected' status, a 'justification' for your decision, and a relevant 'quote' from the transcript if one exists.
-    Return your findings as a JSON array where each object corresponds to one of the provided metrics.
   `;
   
   try {
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
+    const response = await chat.sendMessage({
+      message: prompt,
       config: {
         responseMimeType: 'application/json',
         responseSchema: {
@@ -67,7 +79,6 @@ export const analyzeTranscript = async (
     const jsonText = response.text.trim();
     const parsedResult = JSON.parse(jsonText);
 
-    // Ensure the result is an array before returning
     if (Array.isArray(parsedResult)) {
         return parsedResult as AnalysisResult[];
     } else {

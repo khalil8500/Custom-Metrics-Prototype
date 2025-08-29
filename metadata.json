@@ -1,0 +1,5 @@
+{
+  "name": "Transcript Metric Detector",
+  "description": "An intelligent tool to analyze transcripts and detect the presence of custom-defined metrics using AI. Paste your transcript, define what you're looking for, and get a detailed analysis with justifications.",
+  "requestFramePermissions": []
+}
